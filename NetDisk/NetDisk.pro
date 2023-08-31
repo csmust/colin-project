@@ -21,11 +21,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
     logindialog.cpp \
         maindialog.cpp \
-    ckernel.cpp
+    ckernel.cpp \
+    mytablewidgetitem.cpp
 
 HEADERS  += maindialog.h \
     ckernel.h \
-    logindialog.h
+    common.h \
+    logindialog.h \
+    mytablewidgetitem.h
 
 FORMS    += maindialog.ui \
     logindialog.ui

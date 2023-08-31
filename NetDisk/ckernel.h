@@ -1,11 +1,11 @@
 #ifndef CKERNEL_H
 #define CKERNEL_H
-#include"maindialog.h"   //窗口类
+#include "maindialog.h"   //窗口类
 #include <QObject>
 #include "INetMediator.h"   //也可以class INetMediator;
-#include"packdef.h"
-#include"logindialog.h"
-
+#include "packdef.h"
+#include "logindialog.h"
+#include "common.h"
 //核心处理类
 //单例
 //1.构造 拷贝构造 析构 私有化
@@ -43,6 +43,7 @@ private:
     //port=8004
 
 signals:
+    void SIG_updateUploadFileProgress(int , int );
 
 public:
     static CKernel* GetInstance(){
@@ -59,7 +60,7 @@ private slots:
     void slot_destory();
     void slot_registerCommit(QString tel , QString password, QString name);
     void slot_loginCommit(QString tel , QString password);
-
+    void slot_uploadFile(QString path , QString dir);
 
     //网络响应槽函数
     void slot_dealClientData(unsigned int lSendIP,char *buf,int nlen);
@@ -67,6 +68,12 @@ private slots:
     void slot_dealLoginRs(unsigned int lSendIP,char *buf,int nlen);
     //处理服务器发来的注册回复
     void slot_dealRegisterRs(unsigned int lSendIP,char *buf,int nlen);
+    //处理服务器发来的上传文件回复
+    void slot_dealUploadFileRs(unsigned int lSendIP,char *buf,int nlen);
+    //处理服务器发来的传输文件数据块的回复
+    void slot_dealFileContentRs(unsigned int lSendIP,char *buf,int nlen);
+
+
 #ifdef USE_SERVER
     //网络响应槽函数
     void slot_dealServerData(unsigned int lSendIP,char *buf,int nlen);
@@ -75,17 +82,25 @@ private:
     void setNetPackMap();
     void SendData(char * buf ,int len);
 private:
+
+    #ifdef USE_SERVER
+    INetMediator *m_tcpServer;
+    #endif
     MainDialog * m_mainDialog;   //指针 堆区窗口，避免函数结束回收
     LoginDialog* m_loginDialog;
 
 
     QString m_ip;  //配置文件ip
     QString m_port;  //配置文件端口号
+    //登录成功后保存个人信息：
+    QString m_name;
+    int m_id;
 
     INetMediator *m_tcpClient;
-#ifdef USE_SERVER
-    INetMediator *m_tcpServer;
-#endif
+
+    //key 时间戳 hhmmsszzz   value 文件信息对象
+    std::map<int , FileInfo> m_mapTimestampToFileInfo;
+
     PFUN m_netPackMap[_DEF_PACK_COUNT];//协议数组,用map有点大材小用，也可以
 };
 
