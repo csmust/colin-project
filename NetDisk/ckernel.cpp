@@ -18,7 +18,16 @@ void CKernel::setNetPackMap()
     NetMap(_DEF_PACK_REGISTER_RS)=&CKernel::slot_dealRegisterRs;
     NetMap(_DEF_PACK_LOGIN_RS)=&CKernel::slot_dealLoginRs;
     NetMap(_DEF_PACK_UPLOAD_FILE_RS) = &CKernel::slot_dealUploadFileRs;
-    NetMap(_DEF_PACK_FILE_CONTENT_RS) = &CKernel::slot_dealFileContentRs;
+    NetMap(_DEF_PACK_FILE_CONTENT_RS) = &CKernel::slot_dealFileContentRs;//上传
+    NetMap(_DEF_PACK_GET_FILE_INFO_RS) = &CKernel::slot_dealGetFileInfoRs;
+    NetMap(_DEF_PACK_FILE_HEADER_RQ) = &CKernel::slot_dealFileHeaderRq;
+    NetMap(_DEF_PACK_FILE_CONTENT_RQ) = &CKernel::slot_dealFileContentRq;//下载
+    NetMap(_DEF_PACK_ADD_FOLDER_RS) = &CKernel::slot_dealAddFolderRs;
+    NetMap(_DEF_PACK_QUICK_UPLOAD_RS)=&CKernel::slot_dealQuickUploadRs; //快传 /秒传
+    NetMap(_DEF_PACK_SHARE_FILE_RS)=&CKernel::slot_dealShareFileRs;
+    NetMap(_DEF_PACK_MY_SHARE_RS) = &CKernel::slot_dealMyShareRs;
+    NetMap(_DEF_PACK_GET_SHARE_RS) = &CKernel::slot_dealGetShareRs;
+
 
 
 
@@ -86,13 +95,32 @@ void CKernel::SendData(char *buf, int len)
     m_tcpClient->SendData(0,buf,len);
 }
 
-//CKernel构造函数
-CKernel::CKernel(QObject *parent) : QObject(parent),m_id(0)
+//系统路径组成  exe同级  ./NetDisk
+#include<QDir>
+#include<QCoreApplication>
+void CKernel::setSystemPath()
 {
+    QString path = QCoreApplication::applicationDirPath()+"/NetDisk";
+    QDir dir;
+    //没有文件夹 就创建
+    if(!dir.exists(path)){
+        dir.mkdir(path); //只能创建一层
+        qDebug()<<"创建路径: "<<path;
+    }
+    //TODO 目前使用默认路径
+    m_sysPath = path;
+}
+
+//CKernel构造函数
+CKernel::CKernel(QObject *parent) : QObject(parent),m_id(0),m_curDir("/")
+{
+
     //设置协议映射
     setNetPackMap();
     //加载ini配置文件 ip port
     loadIniFile();
+    //设置系统路径
+    setSystemPath();
 
 #ifdef USE_SERVER
     m_tcpServer = new TcpServerMediator;
@@ -128,6 +156,30 @@ CKernel::CKernel(QObject *parent) : QObject(parent),m_id(0)
             this,SLOT(slot_uploadFile(QString,QString)));
     connect(this,SIGNAL(SIG_updateUploadFileProgress(int,int)),
             m_mainDialog,SLOT(slot_updateUploadFileProgress(int,int)) );
+
+    connect(m_mainDialog,SIGNAL(SIG_downloadFile(int,QString)),
+            this,SLOT(slot_downloadFile(int,QString)));
+
+    connect(m_mainDialog,SIGNAL(SIG_downloadFolder(int,QString)),
+            this,SLOT(slot_downloadFolder(int,QString)));
+
+    connect(this , SIGNAL(SIG_updateDownloadFileProgress(int,int)),
+            m_mainDialog,SLOT(slot_updateDownloadFileProgress(int,int)));
+
+    connect(m_mainDialog, SIGNAL(SIG_addFolder(QString,QString)),
+            this , SLOT(slot_addFolder(QString,QString)));
+
+    connect(m_mainDialog,SIGNAL(SIG_changeDir(QString)),
+            this,SLOT(slot_changeDir(QString )));
+
+    connect(m_mainDialog,SIGNAL(SIG_uploadFolder(QString,QString)),
+            this,SLOT(slot_uploadFolder(QString,QString)));
+
+    connect(m_mainDialog ,SIGNAL(SIG_shareFile(QVector<int>,QString)),
+            this , SLOT(slot_shareFile(QVector<int>,QString)));
+
+    connect(m_mainDialog,SIGNAL(SIG_getShareByLink(int,QString)),
+            this,SLOT(slot_getShareByLink(int,QString)));
 
 #ifdef USE_SERVER
     //测试 对服务器发送数据
@@ -207,9 +259,18 @@ void CKernel::slot_uploadFile(QString path, QString dir)
         qDebug()<<"file open fail";
         return;
     }
+    //获取时间戳
     int timestamp = QDateTime::currentDateTime().toString("hhmmsszzz").toInt();
-    qDebug()<<"timestamp: "<<timestamp;
+
+    //BUG修复 反复检测时间戳是否已经检测 避免冲突
+    while(m_mapTimestampToFileInfo.count(timestamp) > 0){
+        //确保上传文件夹时候 所有文件的时间戳都是唯一
+        timestamp++;
+    }
+
+
     info.timestamp = timestamp;
+    qDebug()<<"timestamp: "<<timestamp;
     //拷贝构造，存储到map里面 key 时间戳 value 文件信息
     m_mapTimestampToFileInfo[timestamp] = info;
 
@@ -240,6 +301,155 @@ void CKernel::slot_uploadFile(QString path, QString dir)
     SendData((char*)&rq , sizeof(rq));
 }
 
+//上传什么路径的文件夹 到什么目录下面
+void CKernel::slot_uploadFolder(QString path, QString dir)
+{
+    qDebug()<<"CKernel::"<<__func__;
+    QFileInfo info(path);
+    QDir dr(path);
+    //当前文件夹的处理 addFolder c:/项目 下面 是有/0314 /   /0527/   1.txt 上传到/05/
+    qDebug() << "folder:" <<info.fileName()<<"dir:"<<dir;
+    slot_addFolder(info.fileName(),dir);
+    //获取文件夹下面一层所有文件的路径（文件信息）
+    QFileInfoList lst = dr.entryInfoList(); //获取路径下所有文件的文件信息列表
+    //遍历所有文件
+    QString newDir = dir+info.fileName()+"/";
+    for(int i =0; i<lst.size();++i){
+        QFileInfo file = lst.at(i);
+        //如果是 . 继续
+        if(file.fileName()==".") continue;
+        //如果是 .. 继续
+        if(file.fileName()=="..") continue;
+        //如果是文件 uploadFile ->路径 文件信息的绝对路径 传到什么目录  /05/项目
+        if(file.isFile()){
+            qDebug() << "file:"<<file.absoluteFilePath()<<"dir:"<<newDir;
+            slot_uploadFile(file.absoluteFilePath(),newDir); //1.txt ->/05/项目
+        }
+        //如果是文件夹 slot_uploadFolder 递归
+        if(file.isDir()){
+            slot_uploadFolder(file.absoluteFilePath(),newDir);
+        }
+    }
+}
+
+//获取当前路径的文件信息列表,配合删除列表，可以实现更新
+void CKernel::slot_getCurDirFileList()
+{
+    //向服务器发送获取当前目录m_curDir文件列表
+    STRU_GET_FILE_INFO_RQ rq;
+    rq.userID = m_id;
+    //兼容中文
+    std::string strDir = m_curDir.toStdString();
+    strcpy(rq.dir , strDir.c_str());
+    SendData((char*)&rq,sizeof(rq));
+}
+
+//获取文件列表，处理服务器发来的获取文件列表回复
+void CKernel::slot_dealGetFileInfoRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_GET_FILE_INFO_RS *rs = (STRU_GET_FILE_INFO_RS *) buf;
+
+    if(m_curDir != QString::fromStdString(rs->dir)){
+        return;
+    }
+    //先删除再添加，实现更新
+    m_mainDialog->slot_deleteAllFileInfo();   //槽函数执行是排队的，解决并发同时删和增问题
+    //获取元素
+    int count = rs->count;
+    //循环插入文件信息到界面
+    for(int i = 0;i<count;i++){
+        FileInfo info;
+        info.fileid=rs->fileInfo[i].fileID;
+        info.type = QString::fromStdString(rs->fileInfo[i].fileType);
+        info.name = QString::fromStdString(rs->fileInfo[i].name);
+        info.size = rs->fileInfo[i].size;
+        info.time = rs->fileInfo[i].time;
+
+        //插入到控件
+        m_mainDialog->slot_insertFileInfo(info);
+
+    }
+
+
+
+}
+
+void CKernel::slot_downloadFile(int fileid, QString dir)
+{
+    qDebug()<<"CKernel::"<<__func__;
+    //写请求
+    STRU_DOWNLOAD_FILE_RQ rq;
+    //兼容中文
+    std::string strDir = dir.toStdString();
+    strcpy(rq.dir,strDir.c_str());
+    rq.fileid   = fileid;
+    //生成时间戳
+    int timestamp = QDateTime::currentDateTime().toString("hhmmsszzz").toInt();
+    //BUG修复
+    while(m_mapTimestampToFileInfo.count(timestamp) > 0){
+        //确保上传文件夹时候 所有文件的时间戳都是唯一 有时候可能速度太快
+        timestamp++;
+    }
+    rq.timestamp=timestamp;
+    rq.userid = m_id;
+    SendData((char*)&rq,sizeof(rq));
+}
+
+void CKernel::slot_downloadFolder(int fileid, QString dir)
+{
+
+}
+
+
+//新建文件夹，什么路径下创建什么名字的文件夹
+void CKernel::slot_addFolder(QString name, QString dir)
+{
+    //发送请求包
+    STRU_ADD_FOLDER_RQ rq;
+    string strDir = dir.toStdString();
+    strcpy(rq.dir, strDir.c_str());
+
+    string strName = name.toStdString();
+    strcpy(rq.fileName ,strName.c_str());
+
+    string strTime = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString();
+    strcpy(rq.time,strTime.c_str());
+
+    rq.timestamp =QDateTime::currentDateTime().toString("hhmmsszzz").toInt();
+    rq.userid = m_id;
+    SendData((char*)&rq,sizeof(rq));
+}
+
+void CKernel::slot_changeDir(QString dir)
+{
+    //更新当前的目录
+    m_curDir = dir;
+    //刷新列表
+    m_mainDialog->slot_deleteAllFileInfo();
+    slot_getCurDirFileList();  //再获取当前文件夹文件信息列表
+}
+//分享  什么目录下面的文件列表
+void CKernel::slot_shareFile(QVector<int> fileidArray, QString dir)
+{
+    qDebug()<<"CKernel::"<<__func__;
+    //打包
+    int packlen = sizeof(STRU_SHARE_FILE_RQ)+sizeof(int)*fileidArray.size();
+    STRU_SHARE_FILE_RQ *rq=(STRU_SHARE_FILE_RQ *)malloc(packlen);
+    rq->init();
+    rq->itemCount=fileidArray.size();
+    for(int i = 0;i<fileidArray.size(); i++){
+        rq->fileidArray[i] = fileidArray[i];
+    }
+    rq->userid = m_id;
+    std::string strDir = dir.toStdString();
+    strcpy(rq->dir,strDir.c_str());
+    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    strcpy(rq->shareTime,time.toStdString().c_str());
+    SendData((char*)rq,packlen);
+    qDebug()<<"CKernel::"<<__func__<<"share packlen = "<<packlen;
+    free(rq);
+}
 
 //客户端处理收到数据
 void CKernel::slot_dealClientData(unsigned int lSendIP, char *buf, int nlen)
@@ -293,8 +503,12 @@ void CKernel::slot_dealLoginRs(unsigned int lSendIP, char *buf, int nlen)
         m_name = rs->name;
         m_id = rs->userid;
 
-        //TODO 获取 根目录下面文件列表
+        // 获取 根目录下面文件列表
+        m_curDir = "/";
+        slot_getCurDirFileList();
 
+        //获取 分享列表
+        slot_getMyShare();
         break;
     }
 
@@ -353,12 +567,14 @@ void CKernel::slot_dealUploadFileRs(unsigned int lSendIP, char *buf, int nlen)
     rq.userid =m_id;
     rq.len = fread(rq.content , 1 , _DEF_BUFFER , info.pFile);
     SendData((char*)&rq,sizeof(rq));
+    //qDebug()<<"处理服务器发来的上传文件回复";
 
 }
 
 //处理服务器发来的传输文件数据块的回复
 void CKernel::slot_dealFileContentRs(unsigned int lSendIP, char *buf, int nlen)
 {
+    qDebug()<<__func__;;
     //拆包
     STRU_FILE_CONTENT_RS * rs = (STRU_FILE_CONTENT_RS *) buf;
     //找到文件信息结构体
@@ -382,8 +598,13 @@ void CKernel::slot_dealFileContentRs(unsigned int lSendIP, char *buf, int nlen)
 
         //判断是否结束
         if(info.pos >= info.size){
+                        qDebug()<<"slot_dealFileContentRs已经结束";
             fclose(info.pFile);
             m_mapTimestampToFileInfo.erase(rs->timestamp);
+            //刷新列表
+            m_mainDialog->slot_deleteAllFileInfo();  //先删除
+            slot_getCurDirFileList();   //再获取
+
             return ;
         }
     }
@@ -394,6 +615,208 @@ void CKernel::slot_dealFileContentRs(unsigned int lSendIP, char *buf, int nlen)
     rq.userid = m_id;
     rq.len = fread(rq.content , 1 ,_DEF_BUFFER , info.pFile);
     SendData((char*)&rq , sizeof(rq));
+            //qDebug()<<"处理服务器发来的传输文件数据块的回复";
+}
+
+
+
+void CKernel::slot_dealFileHeaderRq(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_FILE_HEADER_RQ * rq = (STRU_FILE_HEADER_RQ *)buf;
+    //创建文件信息结构体 赋值
+    FileInfo info;
+    //默认路径 sysPath(不包含最后的'/') + dir + name
+    //TODO dir 可能有很多层，需要循环创建目录  ，比如下载网盘比较深的文件，需要在本地循环创建文件夹
+    QString tmpDir = QString::fromStdString(rq->dir); //NetDisk/111/222 下的 1.txt
+    QStringList dirList = tmpDir.split("/");   //分割函数  NetDisk 111 222
+
+    QString pathsum = m_sysPath;
+    for(QString & node : dirList)
+    {
+        if(!node.isEmpty()){
+            pathsum +="/";
+            pathsum += node;
+            QDir dir;
+            if(!dir.exists(pathsum)){
+                dir.mkdir(pathsum);
+            }
+        }
+    }
+
+    info.name = QString::fromStdString(rq->fileName);
+    info.dir = QString::fromStdString(rq->dir);
+    qDebug()<<"info.dir : "<<info.dir;
+    info.absolutePath=QString ("%1%2%3").arg(m_sysPath).arg(info.dir).arg(info.name); //TODO 目前使用默认路径保存下载
+    info.fileid = rq->fileid;
+    info.md5 = QString::fromStdString(rq->md5);
+
+    info.size=rq->size;
+    info.time=QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    info.timestamp = rq->timestamp;
+    info.type = "file";
+    //打开文件 tips  fopen 是ASCII的编码 需要转换
+    char pathbuf[1000]="";
+    Utf8ToGB2312(pathbuf , 1000 , info.absolutePath);
+    qDebug()<<pathbuf;
+    info.pFile = fopen(pathbuf,"wb");
+    if(!info.pFile){
+        qDebug()<<"file open fail";
+        return;
+    }
+
+    //保存下载信息到控件界面
+    m_mainDialog->slot_insertDownloadFile(info);
+    //保存map里面
+    m_mapTimestampToFileInfo[rq->timestamp] = info;
+    //写回复
+    STRU_FILE_HEADER_RS rs;
+    rs.fileid=rq->fileid;
+    rs.result=1;
+    rs.timestamp = rq->timestamp;
+    rs.userid = m_id;
+
+    SendData((char*)&rs , sizeof(rs));
+
+}
+
+void CKernel::slot_dealFileContentRq(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_FILE_CONTENT_RQ * rq = (STRU_FILE_CONTENT_RQ *) buf;
+
+    //拿到文件信息结构
+    if(m_mapTimestampToFileInfo.count(rq->timestamp) == 0 ) return;
+    FileInfo & info = m_mapTimestampToFileInfo[rq->timestamp];
+    STRU_FILE_CONTENT_RS rs;
+    //写文件          文件内容 每次写多少个字节  预计写多少次  文件描述符
+    int len = fwrite(rq->content, 1,rq->len ,info.pFile);
+    if(len !=rq->len){
+        //不成功 调回去
+        rs.result = 0;
+        fseek(info.pFile , -1*len , SEEK_CUR);
+    }else{
+        //成功 pos+=len
+        rs.result = 1;
+        info.pos += len;
+
+        //TODO更新界面显示进度
+        Q_EMIT SIG_updateDownloadFileProgress(rq->timestamp,info.pos);
+
+        //要看 有没有到末尾 是否结束
+        if(info.pos >= info.size){
+            //结束 关闭文件 回收
+            fclose(info.pFile);
+            m_mapTimestampToFileInfo.erase(rq->timestamp);
+        }
+    }
+
+
+    //写回复
+    rs.fileid = rq->fileid;
+    rs.len = rq->len;
+    rs.timestamp = rq->timestamp;
+    rs.userid = m_id;
+    //发送
+    SendData((char*)&rs , sizeof(rs));
+}
+
+void CKernel::slot_dealAddFolderRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_ADD_FOLDER_RS *rs = (STRU_ADD_FOLDER_RS *)buf;
+    //判断是否成功
+    if(rs->result !=1 ) return;
+    //删除界面中原来的列表
+    //m_mainDialog->slot_deleteAllFileInfo(); //先删除 这种方式上传文件夹会出现并发问题 增删同时发生
+    //更新文件列表
+    slot_getCurDirFileList();
+}
+//快传 秒传
+void CKernel::slot_dealQuickUploadRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_QUICK_UPLOAD_RS *rs = (STRU_QUICK_UPLOAD_RS*)buf;
+    //获取文件信息
+    if(m_mapTimestampToFileInfo.count(rs->timestamp) == 0) return;
+    FileInfo &info = m_mapTimestampToFileInfo[rs->timestamp];
+    //关闭文件句柄
+    if(info.pFile)
+        fclose(info.pFile);
+    //写入上传已完成信息
+    m_mainDialog->slot_insertUploadComplete(info);
+    //发送刷新文件列表
+    if(m_curDir == info.dir)
+    {
+        m_mainDialog->slot_deleteAllFileInfo();
+        slot_getCurDirFileList();
+    }
+    //删除节点
+    m_mapTimestampToFileInfo.erase(rs->timestamp);
+}
+
+//处理服务器发来的分享文件回复
+void CKernel::slot_dealShareFileRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_SHARE_FILE_RS *rs= (STRU_SHARE_FILE_RS *)buf;
+    //判断是否成功
+    if(rs->result!=1) return;
+    //刷新 发获取请求
+    slot_getMyShare();
+}
+
+
+void CKernel::slot_getMyShare(){
+    STRU_MY_SHARE_RQ rq;
+    rq.userid = m_id;
+    SendData((char*)&rq , sizeof(rq));
+}
+
+
+void CKernel::slot_dealMyShareRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_MY_SHARE_RS * rs = (STRU_MY_SHARE_RS *)buf;
+    int count = rs->itemCount;
+    //清空界面所有分享内容
+    m_mainDialog->slot_deleteAllShareInfo();
+    //遍历 分享文件的信息  添加到控件上面
+    for(int i = 0; i<count ;i++){
+        m_mainDialog->slot_insertShareFileInfo(rs->items[i].name , rs->items[i].size ,rs->items[i].time,rs->items[i].shareLink);
+    }
+}
+
+//获取什么分享码的文件 添加到什么目录
+void CKernel::slot_getShareByLink(int code, QString dir)
+{
+    //发请求
+    STRU_GET_SHARE_RQ rq;
+    string tmpDir = dir.toStdString();
+    strcpy(rq.dir,tmpDir.c_str());
+    rq.shareLink =code;
+    //客户端请求分享的时间作为上传时间
+    string time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString();
+    strcpy(rq.time ,time.c_str());
+    rq.userid = m_id;
+    SendData((char*)&rq , sizeof(rq));
+}
+
+//处理服务器发来的获取分享码的分享回复
+void CKernel::slot_dealGetShareRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_GET_SHARE_RS *rs =(STRU_GET_SHARE_RS *)buf;
+    //根据结果
+    if(rs->result==0){
+        QMessageBox::about(m_mainDialog,"提示","获取分享失败");
+        //错误返回提示
+    }else{
+        //正确刷新界面列表 ，
+        if(QString::fromStdString(rs->dir) == m_curDir){
+            slot_getCurDirFileList();
+        }
+    }
 }
 
 

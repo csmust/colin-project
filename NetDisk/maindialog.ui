@@ -281,7 +281,7 @@
       <item>
        <widget class="QStackedWidget" name="sw_page">
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="page_file">
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -478,6 +478,15 @@
              </property>
              <item>
               <widget class="QTableWidget" name="table_file">
+               <property name="contextMenuPolicy">
+                <enum>Qt::CustomContextMenu</enum>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="selectionBehavior">
+                <enum>QAbstractItemView::SelectRows</enum>
+               </property>
                <attribute name="horizontalHeaderDefaultSectionSize">
                 <number>160</number>
                </attribute>
@@ -529,7 +538,7 @@
           <item>
            <widget class="QTabWidget" name="tw_transmit">
             <property name="currentIndex">
-             <number>2</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_upload">
              <attribute name="title">
@@ -553,6 +562,12 @@
               </property>
               <item>
                <widget class="QTableWidget" name="table_upload">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectRows</enum>
+                </property>
                 <attribute name="horizontalHeaderDefaultSectionSize">
                  <number>95</number>
                 </attribute>
@@ -618,8 +633,14 @@
               </property>
               <item>
                <widget class="QTableWidget" name="table_download">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectRows</enum>
+                </property>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>160</number>
+                 <number>100</number>
                 </attribute>
                 <attribute name="horizontalHeaderStretchLastSection">
                  <bool>true</bool>
@@ -640,6 +661,21 @@
                 <column>
                  <property name="text">
                   <string>时间</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>速率</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>进度</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string/>
                  </property>
                 </column>
                </widget>
@@ -668,6 +704,12 @@
               </property>
               <item>
                <widget class="QTableWidget" name="table_complete">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectRows</enum>
+                </property>
                 <attribute name="horizontalHeaderDefaultSectionSize">
                  <number>130</number>
                 </attribute>
@@ -749,8 +791,14 @@
               </property>
               <item>
                <widget class="QTableWidget" name="table_share">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
+                <property name="selectionBehavior">
+                 <enum>QAbstractItemView::SelectRows</enum>
+                </property>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>160</number>
+                 <number>111</number>
                 </attribute>
                 <attribute name="horizontalHeaderStretchLastSection">
                  <bool>true</bool>
@@ -771,6 +819,11 @@
                 <column>
                  <property name="text">
                   <string>时间</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>分享码</string>
                  </property>
                 </column>
                </widget>

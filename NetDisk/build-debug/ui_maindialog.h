@@ -264,6 +264,9 @@ public:
         QTableWidgetItem *__qtablewidgetitem2 = new QTableWidgetItem();
         table_file->setHorizontalHeaderItem(2, __qtablewidgetitem2);
         table_file->setObjectName(QString::fromUtf8("table_file"));
+        table_file->setContextMenuPolicy(Qt::CustomContextMenu);
+        table_file->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table_file->setSelectionBehavior(QAbstractItemView::SelectRows);
         table_file->horizontalHeader()->setDefaultSectionSize(160);
         table_file->horizontalHeader()->setStretchLastSection(true);
         table_file->verticalHeader()->setVisible(false);
@@ -306,6 +309,8 @@ public:
         QTableWidgetItem *__qtablewidgetitem8 = new QTableWidgetItem();
         table_upload->setHorizontalHeaderItem(5, __qtablewidgetitem8);
         table_upload->setObjectName(QString::fromUtf8("table_upload"));
+        table_upload->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table_upload->setSelectionBehavior(QAbstractItemView::SelectRows);
         table_upload->horizontalHeader()->setDefaultSectionSize(95);
         table_upload->horizontalHeader()->setStretchLastSection(true);
         table_upload->verticalHeader()->setVisible(false);
@@ -321,16 +326,24 @@ public:
         verticalLayout_7->setObjectName(QString::fromUtf8("verticalLayout_7"));
         verticalLayout_7->setContentsMargins(0, 0, 0, 0);
         table_download = new QTableWidget(tab_download);
-        if (table_download->columnCount() < 3)
-            table_download->setColumnCount(3);
+        if (table_download->columnCount() < 6)
+            table_download->setColumnCount(6);
         QTableWidgetItem *__qtablewidgetitem9 = new QTableWidgetItem();
         table_download->setHorizontalHeaderItem(0, __qtablewidgetitem9);
         QTableWidgetItem *__qtablewidgetitem10 = new QTableWidgetItem();
         table_download->setHorizontalHeaderItem(1, __qtablewidgetitem10);
         QTableWidgetItem *__qtablewidgetitem11 = new QTableWidgetItem();
         table_download->setHorizontalHeaderItem(2, __qtablewidgetitem11);
+        QTableWidgetItem *__qtablewidgetitem12 = new QTableWidgetItem();
+        table_download->setHorizontalHeaderItem(3, __qtablewidgetitem12);
+        QTableWidgetItem *__qtablewidgetitem13 = new QTableWidgetItem();
+        table_download->setHorizontalHeaderItem(4, __qtablewidgetitem13);
+        QTableWidgetItem *__qtablewidgetitem14 = new QTableWidgetItem();
+        table_download->setHorizontalHeaderItem(5, __qtablewidgetitem14);
         table_download->setObjectName(QString::fromUtf8("table_download"));
-        table_download->horizontalHeader()->setDefaultSectionSize(160);
+        table_download->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table_download->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table_download->horizontalHeader()->setDefaultSectionSize(100);
         table_download->horizontalHeader()->setStretchLastSection(true);
         table_download->verticalHeader()->setVisible(false);
 
@@ -347,15 +360,17 @@ public:
         table_complete = new QTableWidget(tab_complete);
         if (table_complete->columnCount() < 4)
             table_complete->setColumnCount(4);
-        QTableWidgetItem *__qtablewidgetitem12 = new QTableWidgetItem();
-        table_complete->setHorizontalHeaderItem(0, __qtablewidgetitem12);
-        QTableWidgetItem *__qtablewidgetitem13 = new QTableWidgetItem();
-        table_complete->setHorizontalHeaderItem(1, __qtablewidgetitem13);
-        QTableWidgetItem *__qtablewidgetitem14 = new QTableWidgetItem();
-        table_complete->setHorizontalHeaderItem(2, __qtablewidgetitem14);
         QTableWidgetItem *__qtablewidgetitem15 = new QTableWidgetItem();
-        table_complete->setHorizontalHeaderItem(3, __qtablewidgetitem15);
+        table_complete->setHorizontalHeaderItem(0, __qtablewidgetitem15);
+        QTableWidgetItem *__qtablewidgetitem16 = new QTableWidgetItem();
+        table_complete->setHorizontalHeaderItem(1, __qtablewidgetitem16);
+        QTableWidgetItem *__qtablewidgetitem17 = new QTableWidgetItem();
+        table_complete->setHorizontalHeaderItem(2, __qtablewidgetitem17);
+        QTableWidgetItem *__qtablewidgetitem18 = new QTableWidgetItem();
+        table_complete->setHorizontalHeaderItem(3, __qtablewidgetitem18);
         table_complete->setObjectName(QString::fromUtf8("table_complete"));
+        table_complete->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table_complete->setSelectionBehavior(QAbstractItemView::SelectRows);
         table_complete->horizontalHeader()->setDefaultSectionSize(130);
         table_complete->horizontalHeader()->setStretchLastSection(true);
         table_complete->verticalHeader()->setVisible(false);
@@ -384,16 +399,20 @@ public:
         verticalLayout_12->setObjectName(QString::fromUtf8("verticalLayout_12"));
         verticalLayout_12->setContentsMargins(0, 0, 0, 0);
         table_share = new QTableWidget(tab_myShare);
-        if (table_share->columnCount() < 3)
-            table_share->setColumnCount(3);
-        QTableWidgetItem *__qtablewidgetitem16 = new QTableWidgetItem();
-        table_share->setHorizontalHeaderItem(0, __qtablewidgetitem16);
-        QTableWidgetItem *__qtablewidgetitem17 = new QTableWidgetItem();
-        table_share->setHorizontalHeaderItem(1, __qtablewidgetitem17);
-        QTableWidgetItem *__qtablewidgetitem18 = new QTableWidgetItem();
-        table_share->setHorizontalHeaderItem(2, __qtablewidgetitem18);
+        if (table_share->columnCount() < 4)
+            table_share->setColumnCount(4);
+        QTableWidgetItem *__qtablewidgetitem19 = new QTableWidgetItem();
+        table_share->setHorizontalHeaderItem(0, __qtablewidgetitem19);
+        QTableWidgetItem *__qtablewidgetitem20 = new QTableWidgetItem();
+        table_share->setHorizontalHeaderItem(1, __qtablewidgetitem20);
+        QTableWidgetItem *__qtablewidgetitem21 = new QTableWidgetItem();
+        table_share->setHorizontalHeaderItem(2, __qtablewidgetitem21);
+        QTableWidgetItem *__qtablewidgetitem22 = new QTableWidgetItem();
+        table_share->setHorizontalHeaderItem(3, __qtablewidgetitem22);
         table_share->setObjectName(QString::fromUtf8("table_share"));
-        table_share->horizontalHeader()->setDefaultSectionSize(160);
+        table_share->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table_share->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table_share->horizontalHeader()->setDefaultSectionSize(111);
         table_share->horizontalHeader()->setStretchLastSection(true);
         table_share->verticalHeader()->setVisible(false);
 
@@ -413,8 +432,8 @@ public:
 
         retranslateUi(MainDialog);
 
-        sw_page->setCurrentIndex(1);
-        tw_transmit->setCurrentIndex(2);
+        sw_page->setCurrentIndex(2);
+        tw_transmit->setCurrentIndex(0);
         tw_share->setCurrentIndex(0);
 
 
@@ -458,20 +477,26 @@ public:
         ___qtablewidgetitem9->setText(QCoreApplication::translate("MainDialog", "\345\244\247\345\260\217", nullptr));
         QTableWidgetItem *___qtablewidgetitem10 = table_download->horizontalHeaderItem(2);
         ___qtablewidgetitem10->setText(QCoreApplication::translate("MainDialog", "\346\227\266\351\227\264", nullptr));
+        QTableWidgetItem *___qtablewidgetitem11 = table_download->horizontalHeaderItem(3);
+        ___qtablewidgetitem11->setText(QCoreApplication::translate("MainDialog", "\351\200\237\347\216\207", nullptr));
+        QTableWidgetItem *___qtablewidgetitem12 = table_download->horizontalHeaderItem(4);
+        ___qtablewidgetitem12->setText(QCoreApplication::translate("MainDialog", "\350\277\233\345\272\246", nullptr));
         tw_transmit->setTabText(tw_transmit->indexOf(tab_download), QCoreApplication::translate("MainDialog", "\344\270\213\350\275\275\344\270\255", nullptr));
-        QTableWidgetItem *___qtablewidgetitem11 = table_complete->horizontalHeaderItem(0);
-        ___qtablewidgetitem11->setText(QCoreApplication::translate("MainDialog", "\346\226\207\344\273\266", nullptr));
-        QTableWidgetItem *___qtablewidgetitem12 = table_complete->horizontalHeaderItem(1);
-        ___qtablewidgetitem12->setText(QCoreApplication::translate("MainDialog", "\345\244\247\345\260\217", nullptr));
-        QTableWidgetItem *___qtablewidgetitem13 = table_complete->horizontalHeaderItem(2);
-        ___qtablewidgetitem13->setText(QCoreApplication::translate("MainDialog", "\346\227\266\351\227\264", nullptr));
+        QTableWidgetItem *___qtablewidgetitem13 = table_complete->horizontalHeaderItem(0);
+        ___qtablewidgetitem13->setText(QCoreApplication::translate("MainDialog", "\346\226\207\344\273\266", nullptr));
+        QTableWidgetItem *___qtablewidgetitem14 = table_complete->horizontalHeaderItem(1);
+        ___qtablewidgetitem14->setText(QCoreApplication::translate("MainDialog", "\345\244\247\345\260\217", nullptr));
+        QTableWidgetItem *___qtablewidgetitem15 = table_complete->horizontalHeaderItem(2);
+        ___qtablewidgetitem15->setText(QCoreApplication::translate("MainDialog", "\346\227\266\351\227\264", nullptr));
         tw_transmit->setTabText(tw_transmit->indexOf(tab_complete), QCoreApplication::translate("MainDialog", "\345\267\262\345\256\214\346\210\220", nullptr));
-        QTableWidgetItem *___qtablewidgetitem14 = table_share->horizontalHeaderItem(0);
-        ___qtablewidgetitem14->setText(QCoreApplication::translate("MainDialog", "\346\226\207\344\273\266", nullptr));
-        QTableWidgetItem *___qtablewidgetitem15 = table_share->horizontalHeaderItem(1);
-        ___qtablewidgetitem15->setText(QCoreApplication::translate("MainDialog", "\345\244\247\345\260\217", nullptr));
-        QTableWidgetItem *___qtablewidgetitem16 = table_share->horizontalHeaderItem(2);
-        ___qtablewidgetitem16->setText(QCoreApplication::translate("MainDialog", "\346\227\266\351\227\264", nullptr));
+        QTableWidgetItem *___qtablewidgetitem16 = table_share->horizontalHeaderItem(0);
+        ___qtablewidgetitem16->setText(QCoreApplication::translate("MainDialog", "\346\226\207\344\273\266", nullptr));
+        QTableWidgetItem *___qtablewidgetitem17 = table_share->horizontalHeaderItem(1);
+        ___qtablewidgetitem17->setText(QCoreApplication::translate("MainDialog", "\345\244\247\345\260\217", nullptr));
+        QTableWidgetItem *___qtablewidgetitem18 = table_share->horizontalHeaderItem(2);
+        ___qtablewidgetitem18->setText(QCoreApplication::translate("MainDialog", "\346\227\266\351\227\264", nullptr));
+        QTableWidgetItem *___qtablewidgetitem19 = table_share->horizontalHeaderItem(3);
+        ___qtablewidgetitem19->setText(QCoreApplication::translate("MainDialog", "\345\210\206\344\272\253\347\240\201", nullptr));
         tw_share->setTabText(tw_share->indexOf(tab_myShare), QCoreApplication::translate("MainDialog", "\346\210\221\347\232\204\345\210\206\344\272\253", nullptr));
     } // retranslateUi
 
