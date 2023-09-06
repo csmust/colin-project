@@ -35,7 +35,8 @@ signals:
     void SIG_shareFile(QVector<int> fileidArray, QString dir);
     //获取什么分享码的文件 添加到什么目录
     void SIG_getShareByLink(int code ,QString dir);
-
+    //删除什么目录下的一系列文件
+    void SIG_deleteFile(QVector<int> fileidArray, QString dir);
 
 public:
     explicit MainDialog(QWidget *parent = nullptr);

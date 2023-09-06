@@ -236,7 +236,6 @@ Makefile: ../NetDisk.pro ../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmak
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/qt_config.prf \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmake.conf \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/spec_post.prf \
-		.qmake.stash \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/exclusive_builds.prf \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/toolchain.prf \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/default_pre.prf \
@@ -268,6 +267,7 @@ Makefile: ../NetDisk.pro ../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmak
 		../../../../QT/5.15.2/mingw81_32/lib/Qt5Network.prl \
 		../../../../QT/5.15.2/mingw81_32/lib/Qt5Core.prl \
 		../../../../QT/5.15.2/mingw81_32/lib/qtmain.prl \
+		.qmake.stash \
 		../../../../QT/5.15.2/mingw81_32/mkspecs/features/build_pass.prf \
 		../resource.qrc
 	$(QMAKE) -o Makefile ..\NetDisk.pro -spec win32-g++ "CONFIG+=debug" "CONFIG+=qml_debug"
@@ -437,7 +437,6 @@ Makefile: ../NetDisk.pro ../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmak
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/qt_config.prf:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmake.conf:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/spec_post.prf:
-.qmake.stash:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/exclusive_builds.prf:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/toolchain.prf:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/default_pre.prf:
@@ -469,6 +468,7 @@ Makefile: ../NetDisk.pro ../../../../QT/5.15.2/mingw81_32/mkspecs/win32-g++/qmak
 ../../../../QT/5.15.2/mingw81_32/lib/Qt5Network.prl:
 ../../../../QT/5.15.2/mingw81_32/lib/Qt5Core.prl:
 ../../../../QT/5.15.2/mingw81_32/lib/qtmain.prl:
+.qmake.stash:
 ../../../../QT/5.15.2/mingw81_32/mkspecs/features/build_pass.prf:
 ../resource.qrc:
 qmake: FORCE

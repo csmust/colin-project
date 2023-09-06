@@ -27,6 +27,8 @@ void CKernel::setNetPackMap()
     NetMap(_DEF_PACK_SHARE_FILE_RS)=&CKernel::slot_dealShareFileRs;
     NetMap(_DEF_PACK_MY_SHARE_RS) = &CKernel::slot_dealMyShareRs;
     NetMap(_DEF_PACK_GET_SHARE_RS) = &CKernel::slot_dealGetShareRs;
+    NetMap(_DEF_PACK_FOLDER_HEADER_RQ) = &CKernel::slot_dealFolderHeadRq;
+    NetMap(_DEF_PACK_DELETE_FILE_RS)=&CKernel::slot_dealDeleteFileRs;
 
 
 
@@ -180,6 +182,8 @@ CKernel::CKernel(QObject *parent) : QObject(parent),m_id(0),m_curDir("/")
 
     connect(m_mainDialog,SIGNAL(SIG_getShareByLink(int,QString)),
             this,SLOT(slot_getShareByLink(int,QString)));
+    connect(m_mainDialog,SIGNAL(SIG_deleteFile(QVector<int>,QString)),
+            this,SLOT(slot_deleteFile(QVector<int>,QString)));
 
 #ifdef USE_SERVER
     //测试 对服务器发送数据
@@ -230,6 +234,7 @@ void CKernel::slot_loginCommit(QString tel, QString password)
     strcpy(rq.password , getMD5(password).c_str());
 
     SendData((char*)&rq,sizeof(rq));
+    return;
 }
 //核心类上传文件的槽函数
 #include<QFileInfo>
@@ -299,6 +304,7 @@ void CKernel::slot_uploadFile(QString path, QString dir)
     rq.userid = m_id;
 
     SendData((char*)&rq , sizeof(rq));
+    return;
 }
 
 //上传什么路径的文件夹 到什么目录下面
@@ -330,6 +336,7 @@ void CKernel::slot_uploadFolder(QString path, QString dir)
             slot_uploadFolder(file.absoluteFilePath(),newDir);
         }
     }
+    return;
 }
 
 //获取当前路径的文件信息列表,配合删除列表，可以实现更新
@@ -342,6 +349,7 @@ void CKernel::slot_getCurDirFileList()
     std::string strDir = m_curDir.toStdString();
     strcpy(rq.dir , strDir.c_str());
     SendData((char*)&rq,sizeof(rq));
+    return;
 }
 
 //获取文件列表，处理服务器发来的获取文件列表回复
@@ -368,11 +376,8 @@ void CKernel::slot_dealGetFileInfoRs(unsigned int lSendIP, char *buf, int nlen)
 
         //插入到控件
         m_mainDialog->slot_insertFileInfo(info);
-
     }
-
-
-
+    return;
 }
 
 void CKernel::slot_downloadFile(int fileid, QString dir)
@@ -394,11 +399,24 @@ void CKernel::slot_downloadFile(int fileid, QString dir)
     rq.timestamp=timestamp;
     rq.userid = m_id;
     SendData((char*)&rq,sizeof(rq));
+    return;
 }
-
+//下载文件夹
 void CKernel::slot_downloadFolder(int fileid, QString dir)
 {
-
+    qDebug()<<"CKernel::"<<__func__;
+    STRU_DOWNLOAD_FOLDER_RQ rq;
+    string strDir = dir.toStdString();
+    strcpy(rq.dir , strDir.c_str());
+    rq.fileid = fileid;
+    int timestamp = QDateTime::currentDateTime().toString("hhmmsszzz").toInt();
+    while(m_mapTimestampToFileInfo.count(timestamp) > 0){
+        timestamp++;
+    }
+    rq.timestamp = timestamp;
+    rq.userid = m_id;
+    SendData((char*)&rq,sizeof(rq));
+    return;
 }
 
 
@@ -419,6 +437,7 @@ void CKernel::slot_addFolder(QString name, QString dir)
     rq.timestamp =QDateTime::currentDateTime().toString("hhmmsszzz").toInt();
     rq.userid = m_id;
     SendData((char*)&rq,sizeof(rq));
+    return;
 }
 
 void CKernel::slot_changeDir(QString dir)
@@ -428,6 +447,7 @@ void CKernel::slot_changeDir(QString dir)
     //刷新列表
     m_mainDialog->slot_deleteAllFileInfo();
     slot_getCurDirFileList();  //再获取当前文件夹文件信息列表
+    return;
 }
 //分享  什么目录下面的文件列表
 void CKernel::slot_shareFile(QVector<int> fileidArray, QString dir)
@@ -449,6 +469,7 @@ void CKernel::slot_shareFile(QVector<int> fileidArray, QString dir)
     SendData((char*)rq,packlen);
     qDebug()<<"CKernel::"<<__func__<<"share packlen = "<<packlen;
     free(rq);
+    return;
 }
 
 //客户端处理收到数据
@@ -479,6 +500,7 @@ void CKernel::slot_dealClientData(unsigned int lSendIP, char *buf, int nlen)
 
     //回收空间
     delete[] buf;
+    return;
 }
 
 //处理服务端发来的登录回复
@@ -512,7 +534,7 @@ void CKernel::slot_dealLoginRs(unsigned int lSendIP, char *buf, int nlen)
         break;
     }
 
-
+    return;
 }
 
 void CKernel::slot_dealRegisterRs(unsigned int lSendIP, char *buf, int nlen)
@@ -531,6 +553,7 @@ void CKernel::slot_dealRegisterRs(unsigned int lSendIP, char *buf, int nlen)
         QMessageBox::about(m_loginDialog,"提示","注册成功");
         break;
     }
+    return;
 }
 
 //处理服务器发来的上传文件回复
@@ -568,7 +591,7 @@ void CKernel::slot_dealUploadFileRs(unsigned int lSendIP, char *buf, int nlen)
     rq.len = fread(rq.content , 1 , _DEF_BUFFER , info.pFile);
     SendData((char*)&rq,sizeof(rq));
     //qDebug()<<"处理服务器发来的上传文件回复";
-
+    return;
 }
 
 //处理服务器发来的传输文件数据块的回复
@@ -616,6 +639,7 @@ void CKernel::slot_dealFileContentRs(unsigned int lSendIP, char *buf, int nlen)
     rq.len = fread(rq.content , 1 ,_DEF_BUFFER , info.pFile);
     SendData((char*)&rq , sizeof(rq));
             //qDebug()<<"处理服务器发来的传输文件数据块的回复";
+    return;
 }
 
 
@@ -677,7 +701,7 @@ void CKernel::slot_dealFileHeaderRq(unsigned int lSendIP, char *buf, int nlen)
     rs.userid = m_id;
 
     SendData((char*)&rs , sizeof(rs));
-
+    return;
 }
 
 void CKernel::slot_dealFileContentRq(unsigned int lSendIP, char *buf, int nlen)
@@ -719,6 +743,7 @@ void CKernel::slot_dealFileContentRq(unsigned int lSendIP, char *buf, int nlen)
     rs.userid = m_id;
     //发送
     SendData((char*)&rs , sizeof(rs));
+    return;
 }
 
 void CKernel::slot_dealAddFolderRs(unsigned int lSendIP, char *buf, int nlen)
@@ -731,6 +756,7 @@ void CKernel::slot_dealAddFolderRs(unsigned int lSendIP, char *buf, int nlen)
     //m_mainDialog->slot_deleteAllFileInfo(); //先删除 这种方式上传文件夹会出现并发问题 增删同时发生
     //更新文件列表
     slot_getCurDirFileList();
+    return;
 }
 //快传 秒传
 void CKernel::slot_dealQuickUploadRs(unsigned int lSendIP, char *buf, int nlen)
@@ -753,6 +779,7 @@ void CKernel::slot_dealQuickUploadRs(unsigned int lSendIP, char *buf, int nlen)
     }
     //删除节点
     m_mapTimestampToFileInfo.erase(rs->timestamp);
+    return;
 }
 
 //处理服务器发来的分享文件回复
@@ -764,6 +791,7 @@ void CKernel::slot_dealShareFileRs(unsigned int lSendIP, char *buf, int nlen)
     if(rs->result!=1) return;
     //刷新 发获取请求
     slot_getMyShare();
+    return;
 }
 
 
@@ -771,6 +799,7 @@ void CKernel::slot_getMyShare(){
     STRU_MY_SHARE_RQ rq;
     rq.userid = m_id;
     SendData((char*)&rq , sizeof(rq));
+    return;
 }
 
 
@@ -785,6 +814,7 @@ void CKernel::slot_dealMyShareRs(unsigned int lSendIP, char *buf, int nlen)
     for(int i = 0; i<count ;i++){
         m_mainDialog->slot_insertShareFileInfo(rs->items[i].name , rs->items[i].size ,rs->items[i].time,rs->items[i].shareLink);
     }
+    return;
 }
 
 //获取什么分享码的文件 添加到什么目录
@@ -800,6 +830,7 @@ void CKernel::slot_getShareByLink(int code, QString dir)
     strcpy(rq.time ,time.c_str());
     rq.userid = m_id;
     SendData((char*)&rq , sizeof(rq));
+    return;
 }
 
 //处理服务器发来的获取分享码的分享回复
@@ -817,6 +848,73 @@ void CKernel::slot_dealGetShareRs(unsigned int lSendIP, char *buf, int nlen)
             slot_getCurDirFileList();
         }
     }
+    return;
+}
+
+void CKernel::slot_dealFolderHeadRq(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_FOLDER_HEADER_RQ *rq=(STRU_FOLDER_HEADER_RQ*)buf;
+    //创建目录
+    // dir 是文件夹名字的路径，可能有很多层本地没有的目录，需要循环创建
+    QString tmpDir = QString::fromStdString(rq->dir); // NetDisk/02/
+    QStringList dirList = tmpDir.split("/");   //分割函数分割 NetDisk/02/
+    QString pathsum = m_sysPath;
+    for(QString &node : dirList)
+    {
+        if(!node.isEmpty()){
+            pathsum+="/";
+            pathsum+=node;
+            QDir dir;
+            if(!dir.exists(pathsum)){
+                dir.mkdir(pathsum);
+            }
+        }
+    }
+    //为文件夹名字后面加上"/"
+    pathsum+="/";
+    pathsum+=QString::fromStdString(rq->fileName);
+    QDir dir;
+    if(!dir.exists(pathsum)){
+        dir.mkdir(pathsum);
+    }
+    return;
+}
+
+//删除什么目录下的一系列文件
+void CKernel::slot_deleteFile(QVector<int> fileidArray, QString dir)
+{
+    //发请求
+    int packlen = sizeof(STRU_DELETE_FILE_RQ)+fileidArray.size()*sizeof(int);
+
+    STRU_DELETE_FILE_RQ *rq = (STRU_DELETE_FILE_RQ * )malloc(packlen);
+    rq->init();
+    string strDir = dir.toStdString();
+    strcpy(rq->dir , strDir.c_str());
+    rq->fileCount = fileidArray.size();
+
+    rq->userid=m_id;
+    for(int i = 0;i<rq->fileCount;i++){
+        rq->fileidArray[i]=fileidArray[i];
+    }
+    SendData((char*)rq,packlen);
+    free(rq);
+    return;
+}
+
+void CKernel::slot_dealDeleteFileRs(unsigned int lSendIP, char *buf, int nlen)
+{
+    //拆包
+    STRU_DELETE_FILE_RS * rs=(STRU_DELETE_FILE_RS * )buf;
+    //看是否成功，成功则刷新界面列表
+    if(rs->result ==1){
+        if(QString::fromStdString(rs->dir)==m_curDir){
+            m_mainDialog->slot_deleteAllFileInfo();
+            slot_getCurDirFileList();
+        }
+    }
+    return;
+
 }
 
 
@@ -879,8 +977,8 @@ void CKernel::loadIniFile()
         setting.endGroup();
 
     }
-    qDebug()<<"配置文件中--"<<"ip:"<<m_ip<<" port:"<<m_port;
-
+    qDebug()<<"--"<<"ip:"<<m_ip<<" port:"<<m_port;
+    return;
 }
 
 

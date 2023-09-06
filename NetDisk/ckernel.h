@@ -114,7 +114,12 @@ private slots:
     void slot_dealMyShareRs(unsigned int lSendIP,char *buf,int nlen);
     //处理服务器发来的获取分享码的分享回复
     void slot_dealGetShareRs(unsigned int lSendIP,char *buf,int nlen);
-
+    //处理服务器发来的文件夹头请求
+    void slot_dealFolderHeadRq(unsigned int lSendIP,char *buf,int nlen);
+    //请求删除什么目录下的一系列文件
+    void slot_deleteFile(QVector<int> fileidArray, QString dir);
+    //处理服务器发来的删除网盘文件回复
+    void slot_dealDeleteFileRs(unsigned int lSendIP,char *buf,int nlen);
 
 #ifdef USE_SERVER
     //网络响应槽函数

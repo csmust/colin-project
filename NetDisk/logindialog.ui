@@ -60,7 +60,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab_login">
     <attribute name="title">
@@ -92,7 +92,7 @@
       <string>清空</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -251,15 +251,6 @@
   <tabstop>le_password</tabstop>
   <tabstop>pb_clear</tabstop>
   <tabstop>pb_login</tabstop>
-  <tabstop>le_tel_2</tabstop>
-  <tabstop>le_password_2</tabstop>
-  <tabstop>pb_login_register_2</tabstop>
-  <tabstop>pb_clear_register_2</tabstop>
-  <tabstop>le_tel_register_2</tabstop>
-  <tabstop>le_password_register_3</tabstop>
-  <tabstop>le_password_register_4</tabstop>
-  <tabstop>pb_login_2</tabstop>
-  <tabstop>pb_clear_2</tabstop>
  </tabstops>
  <resources>
   <include location="resource.qrc"/>

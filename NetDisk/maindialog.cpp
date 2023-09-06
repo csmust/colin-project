@@ -210,9 +210,26 @@ void MainDialog::slot_shareFile(bool flag)
     Q_EMIT SIG_shareFile(array,ui->lb_path->text());
 }
 
+//删除网盘文件或文件夹
 void MainDialog::slot_deleteFile(bool flag)
 {
-    qDebug()<<__func__;
+    qDebug()<<"MainDialog::"<<__func__;
+    //申请数组 存文件id
+    QVector<int> array;
+    int count = ui->table_file->rowCount();
+    //遍历所有项
+    for(int i =0;i<count ; ++i){
+        MyTableWidgetItem * item0 =(MyTableWidgetItem*)ui->table_file->item(i,0);
+        //看是否是打钩的
+        if(item0->checkState()==Qt::Checked){
+            //添加到数组里面
+            array.push_back(item0->m_info.fileid);
+        }
+    }
+
+    //发送信号
+    Q_EMIT SIG_deleteFile(array,ui->lb_path->text());
+
 
 }
 

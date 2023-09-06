@@ -7,7 +7,9 @@
 QT       += core gui
 CONFIG   += c++11
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
+#QMAKE_CXXFLAGS += -Werror=return-type
+#QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
+#QMAKE_LFLAGS_RELEASE = $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
 include(./netapi/netapi.pri)
 INCLUDEPATH +=./netapi/
 

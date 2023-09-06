@@ -46,7 +46,7 @@ bool TcpClientMediator::SendData( unsigned int lSendIP , char* buf , int nlen )
         }
         else
         {
-            return -1;
+            return false;
         }
     }
 }
